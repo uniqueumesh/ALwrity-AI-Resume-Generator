@@ -107,6 +107,21 @@ with st.form("resume_form"):
         phone = st.text_input("Phone", placeholder="+1 (555) 123-4567", help="Your contact number")
         location = st.text_input("Location", placeholder="New York, NY", help="City, State or City, Country")
         
+        # Additional fields for different templates
+        if selected_template in ["executive", "technical", "creative", "modern"]:
+            title = st.text_input("Professional Title", placeholder="Software Engineer", help="Your current or desired job title")
+            linkedin = st.text_input("LinkedIn Profile", placeholder="linkedin.com/in/yourname", help="Your LinkedIn profile URL")
+            
+        if selected_template == "technical":
+            github = st.text_input("GitHub Profile", placeholder="github.com/yourname", help="Your GitHub profile URL")
+            
+        if selected_template == "creative":
+            portfolio = st.text_input("Portfolio Website", placeholder="yourname.com", help="Your portfolio or personal website")
+
+        if selected_template == "professional_sidebar":
+            website = st.text_input("Website", placeholder="yourname.com", help="Personal site or portfolio")
+            photo_url = st.text_input("Photo URL (optional)", placeholder="https://.../photo.jpg", help="Used in sidebar; keep under 500x500px for best print")
+        
         st.subheader("🎓 Education")
         degree = st.text_input("Degree", placeholder="Bachelor of Science in Computer Science", help="Your degree or qualification")
         institution = st.text_input("Institution", placeholder="University Name", help="Name of your school or university")
@@ -121,6 +136,10 @@ with st.form("resume_form"):
         
         st.subheader("🛠️ Skills")
         skills = st.text_area("Skills (comma-separated)", placeholder="Python, JavaScript, React, SQL, Project Management", help="List your skills separated by commas")
+
+        if selected_template == "professional_sidebar":
+            st.subheader("🌐 Languages")
+            languages_text = st.text_area("Languages (name:level, comma-separated)", placeholder="English:Fluent, French:Intermediate")
     
     # Optional: Job Description for Optimization
     st.subheader("🎯 Target Job (Optional)")
@@ -140,13 +159,46 @@ if submitted:
     else:
         with st.spinner("🤖 AI is generating your professional resume..."):
             # Prepare user data
+            personal_info = {
+                "name": name,
+                "email": email,
+                "phone": phone,
+                "location": location
+            }
+            
+            # Add template-specific fields
+            if selected_template in ["executive", "technical", "creative", "modern"]:
+                personal_info["title"] = title if 'title' in locals() else ""
+                personal_info["linkedin"] = linkedin if 'linkedin' in locals() else ""
+            
+            if selected_template == "technical" and 'github' in locals():
+                personal_info["github"] = github
+                
+            if selected_template == "creative" and 'portfolio' in locals():
+                personal_info["portfolio"] = portfolio
+            
+            # Languages parsing for professional_sidebar
+            languages = []
+            if selected_template == "professional_sidebar" and 'languages_text' in locals() and languages_text:
+                try:
+                    for item in languages_text.split(','):
+                        name_level = item.strip().split(':')
+                        if len(name_level) == 2:
+                            languages.append({"name": name_level[0].strip(), "level": name_level[1].strip()})
+                        elif name_level[0].strip():
+                            languages.append({"name": name_level[0].strip(), "level": ""})
+                except Exception:
+                    languages = []
+
+            # Attach website/photo for professional_sidebar
+            if selected_template == "professional_sidebar":
+                if 'website' in locals():
+                    personal_info["website"] = website
+                if 'photo_url' in locals():
+                    personal_info["photo_url"] = photo_url
+
             user_data = {
-                "personal_info": {
-                    "name": name,
-                    "email": email,
-                    "phone": phone,
-                    "location": location
-                },
+                "personal_info": personal_info,
                 "experience": [{
                     "title": job_title,
                     "company": company,
@@ -158,7 +210,8 @@ if submitted:
                     "institution": institution,
                     "year": grad_year
                 }] if degree else [],
-                "skills": skills.split(",") if skills else []
+                "skills": skills.split(",") if skills else [],
+                "languages": languages
             }
             
             # Generate AI content
@@ -172,12 +225,16 @@ if submitted:
             summary = extract_summary_from_content(ai_content)
             
             # Prepare resume data for template
+            # For sidebar template we pass additional structured fields
             resume_data = {
                 "personal_info": user_data["personal_info"],
                 "summary": summary,
                 "experience": user_data["experience"],
                 "education": user_data["education"],
-                "skills": ", ".join(user_data["skills"])
+                "skills": ", ".join(user_data["skills"]),
+                "skills_list": [s.strip() for s in user_data["skills"]] if user_data["skills"] else [],
+                "languages": user_data.get("languages", []),
+                "references": []
             }
             
             # Generate HTML resume

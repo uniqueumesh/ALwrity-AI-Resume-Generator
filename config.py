@@ -12,9 +12,12 @@ APP_DESCRIPTION = "Generate professional resumes with AI assistance"
 
 # Resume Templates
 RESUME_TEMPLATES = {
+    "professional_sidebar": "Professional Sidebar Template",
+    "executive": "Executive/Leadership Template",
+    "technical": "Technical Professional Template",
+    "creative": "Creative Professional Template",
     "modern": "Modern Clean Template",
-    "professional": "Professional Corporate Template", 
-    "creative": "Creative Design Template",
+    "professional": "Professional Corporate Template",
     "ats_friendly": "ATS-Optimized Template"
 }
 
